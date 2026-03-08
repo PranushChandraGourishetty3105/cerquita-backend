@@ -1,12 +1,11 @@
 {
   "name": "cerquita-backend",
   "version": "1.0.0",
-  "description": "Cerquita Backend Server",
+  "description": "Cerquita backend server",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -17,6 +16,6 @@
     "express": "^5.2.1",
     "mongodb": "^6.21.0",
     "mongoose": "^8.23.0",
-    "multer": "^2.1.1",
+    "multer": "^2.1.1"
   }
 }
