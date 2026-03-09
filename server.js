@@ -22,7 +22,7 @@ app.use(express.json({ limit: "10mb" }));
 const uploadDir = path.join(__dirname, "uploads");
 
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 /* ================= SERVE IMAGES ================= */
@@ -205,39 +205,14 @@ message:"Server error"
 
 });
 
-/* ================= CHECK VENDOR SHOP ================= */
-
-app.post("/vendor/check",async(req,res)=>{
-
-try{
-
-const {email}=req.body;
-
-const vendor=await Vendor.findOne({email});
-
-if(!vendor){
-return res.json({exists:false});
-}
-
-res.json({
-exists:true,
-vendor
-});
-
-}catch(err){
-
-console.log(err);
-res.json({exists:false});
-
-}
-
-});
-
 /* ================= CREATE OR UPDATE SHOP ================= */
 
 app.post("/vendor/create", upload.single("image"), async (req,res)=>{
 
 try{
+
+console.log("SHOP BODY:",req.body);
+console.log("SHOP FILE:",req.file);
 
 const {
 email,
@@ -314,35 +289,12 @@ message:"Server error"
 
 });
 
-/* ================= GET SHOP ================= */
-
-app.get("/vendor/shop/:email",async(req,res)=>{
-
-try{
-
-const shop=await Vendor.findOne({email:req.params.email});
-
-res.json({
-success:true,
-shop
-});
-
-}catch(err){
-
-res.json({
-success:false
-});
-
-}
-
-});
-
 /* ================= ADD PRODUCT ================= */
 
-
 app.post("/product/add",upload.single("image"),async(req,res)=>{
-console.log("BODY:", req.body);
-console.log("FILE:", req.file);
+
+console.log("PRODUCT BODY:",req.body);
+console.log("PRODUCT FILE:",req.file);
 
 try{
 
