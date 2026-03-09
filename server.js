@@ -14,19 +14,23 @@ app.use(cors({
   origin: "*",
   methods: ["GET","POST","PUT","DELETE"],
 }));
+
 app.use(express.json({ limit: "10mb" }));
 
 /* ================= CREATE UPLOAD FOLDER ================= */
 
-if (!fs.existsSync("uploads")) {
-  fs.mkdirSync("uploads");
+const uploadDir = path.join(__dirname, "uploads");
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
 }
 
 /* ================= SERVE IMAGES ================= */
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(uploadDir));
 
 /* ================= MONGODB ================= */
+
 mongoose.connect(process.env.MONGO_URI)
 .then(()=>console.log("✅ MongoDB Atlas Connected"))
 .catch(err=>console.log("MongoDB Error:",err));
@@ -36,11 +40,11 @@ mongoose.connect(process.env.MONGO_URI)
 const storage = multer.diskStorage({
 
 destination:(req,file,cb)=>{
-cb(null,"uploads/");
+cb(null, uploadDir);
 },
 
 filename:(req,file,cb)=>{
-cb(null,Date.now()+path.extname(file.originalname));
+cb(null, Date.now()+path.extname(file.originalname));
 }
 
 });
@@ -88,7 +92,8 @@ vendorEmail:String,
 productName:String,
 price:Number,
 quantity:String,
-image:String
+image:String,
+category:String
 });
 
 const Product = mongoose.model("Product",productSchema);
@@ -234,9 +239,6 @@ app.post("/vendor/create", upload.single("image"), async (req,res)=>{
 
 try{
 
-console.log("BODY:",req.body);
-console.log("FILE:",req.file);
-
 const {
 email,
 shopName,
@@ -251,11 +253,11 @@ longitude
 
 let vendor = await Vendor.findOne({email});
 
-if(vendor){
-
 const imageUrl = req.file
 ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
 : "";
+
+if(vendor){
 
 await Vendor.updateOne(
 {email},
@@ -278,9 +280,6 @@ message:"Shop updated successfully"
 });
 
 }
-const imageUrl = req.file
-? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
-: "";
 
 vendor = new Vendor({
 email,
@@ -344,7 +343,7 @@ app.post("/product/add",upload.single("image"),async(req,res)=>{
 
 try{
 
-const {vendorEmail,productName,price,quantity}=req.body;
+const {vendorEmail,productName,price,quantity,category}=req.body;
 
 if(!vendorEmail||!productName||!price||!quantity){
 
@@ -354,6 +353,7 @@ message:"Missing fields"
 });
 
 }
+
 const imageUrl = req.file
 ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
 : "";
@@ -363,6 +363,7 @@ vendorEmail,
 productName,
 price,
 quantity,
+category,
 image:imageUrl
 });
 
@@ -403,32 +404,6 @@ products
 }catch(err){
 
 console.log(err);
-
-res.json({
-success:false,
-products:[]
-});
-
-}
-
-});
-
-/* ================= PRODUCTS BY VENDOR ================= */
-
-app.get("/vendor/products/:email",async(req,res)=>{
-
-try{
-
-const products=await Product.find({
-vendorEmail:req.params.email
-});
-
-res.json({
-success:true,
-products
-});
-
-}catch(err){
 
 res.json({
 success:false,
@@ -488,8 +463,8 @@ vendors:[]
 
 /* ================= SERVER ================= */
 
-const PORT=5000;
+const PORT = process.env.PORT || 5000;
 
-app.listen(PORT,()=>{
-console.log(`🚀 Server running on http://localhost:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
