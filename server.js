@@ -161,6 +161,8 @@ app.post("/login",async(req,res)=>{
 
 try{
 
+console.log("LOGIN BODY:",req.body);
+
 const {email,password}=req.body;
 
 const user=await User.findOne({email});
@@ -199,6 +201,37 @@ console.log(err);
 res.json({
 success:false,
 message:"Server error"
+});
+
+}
+
+});
+
+/* ================= CHECK VENDOR SHOP ================= */
+
+app.post("/vendor/check", async (req, res) => {
+
+try{
+
+const { email } = req.body;
+
+const vendor = await Vendor.findOne({ email });
+
+if(!vendor){
+return res.json({exists:false});
+}
+
+res.json({
+exists:true,
+vendor
+});
+
+}catch(err){
+
+console.log("CHECK VENDOR ERROR:",err);
+
+res.json({
+exists:false
 });
 
 }
