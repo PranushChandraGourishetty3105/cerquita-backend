@@ -161,8 +161,6 @@ app.post("/login",async(req,res)=>{
 
 try{
 
-console.log("LOGIN BODY:",req.body);
-
 const {email,password}=req.body;
 
 const user=await User.findOne({email});
@@ -244,9 +242,6 @@ app.post("/vendor/create", upload.single("image"), async (req,res)=>{
 
 try{
 
-console.log("SHOP BODY:",req.body);
-console.log("SHOP FILE:",req.file);
-
 const {
 email,
 shopName,
@@ -322,12 +317,37 @@ message:"Server error"
 
 });
 
+/* ================= GET SHOP ================= */
+
+app.get("/vendor/shop/:email", async (req,res)=>{
+
+try{
+
+const email = req.params.email.trim();
+
+const shop = await Vendor.findOne({email});
+
+res.json({
+success:true,
+shop
+});
+
+}catch(err){
+
+console.log("GET SHOP ERROR:",err);
+
+res.json({
+success:false,
+shop:null
+});
+
+}
+
+});
+
 /* ================= ADD PRODUCT ================= */
 
 app.post("/product/add",upload.single("image"),async(req,res)=>{
-
-console.log("PRODUCT BODY:",req.body);
-console.log("PRODUCT FILE:",req.file);
 
 try{
 
