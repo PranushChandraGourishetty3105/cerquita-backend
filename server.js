@@ -107,30 +107,26 @@ try{
 const {name,email,password,role}=req.body;
 
 if(!name||!email||!password){
-
 return res.json({
 success:false,
 message:"All fields required"
 });
-
 }
 
-const existingUser=await User.findOne({email});
+const existingUser=await User.findOne({email: email.trim().toLowerCase()});
 
 if(existingUser){
-
 return res.json({
 success:false,
 message:"User already exists"
 });
-
 }
 
 const hashedPassword=await bcrypt.hash(password,10);
 
 const user=new User({
 name,
-email,
+email: email.trim().toLowerCase(),
 password:hashedPassword,
 role
 });
@@ -163,26 +159,22 @@ try{
 
 const {email,password}=req.body;
 
-const user=await User.findOne({email});
+const user=await User.findOne({email: email.trim().toLowerCase()});
 
 if(!user){
-
 return res.json({
 success:false,
 message:"User not found"
 });
-
 }
 
 const isMatch=await bcrypt.compare(password,user.password);
 
 if(!isMatch){
-
 return res.json({
 success:false,
 message:"Invalid password"
 });
-
 }
 
 res.json({
@@ -211,7 +203,7 @@ app.post("/vendor/check", async (req, res) => {
 
 try{
 
-const { email } = req.body;
+const email = req.body.email.trim().toLowerCase();
 
 const vendor = await Vendor.findOne({ email });
 
@@ -254,7 +246,9 @@ latitude,
 longitude
 } = req.body;
 
-let vendor = await Vendor.findOne({email});
+const cleanEmail = email.trim().toLowerCase();
+
+let vendor = await Vendor.findOne({email: cleanEmail});
 
 const imageUrl = req.file
 ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
@@ -263,7 +257,7 @@ const imageUrl = req.file
 if(vendor){
 
 await Vendor.updateOne(
-{email},
+{email: cleanEmail},
 {
 shopName,
 proprietorName,
@@ -285,7 +279,7 @@ message:"Shop updated successfully"
 }
 
 vendor = new Vendor({
-email,
+email: cleanEmail,
 shopName,
 proprietorName,
 address,
@@ -323,7 +317,7 @@ app.get("/vendor/shop/:email", async (req,res)=>{
 
 try{
 
-const email = req.params.email.trim();
+const email = req.params.email.trim().toLowerCase();
 
 const shop = await Vendor.findOne({email});
 
@@ -354,12 +348,10 @@ try{
 const {vendorEmail,productName,price,quantity,category}=req.body;
 
 if(!vendorEmail||!productName||!price||!quantity){
-
 return res.json({
 success:false,
 message:"Missing fields"
 });
-
 }
 
 const imageUrl = req.file
@@ -367,7 +359,7 @@ const imageUrl = req.file
 : "";
 
 const product=new Product({
-vendorEmail,
+vendorEmail: vendorEmail.trim().toLowerCase(),
 productName,
 price,
 quantity,
@@ -400,7 +392,7 @@ app.post("/product/list",async(req,res)=>{
 
 try{
 
-const {email}=req.body;
+const email = req.body.email.trim().toLowerCase();
 
 const products=await Product.find({vendorEmail:email});
 
