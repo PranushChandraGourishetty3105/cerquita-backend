@@ -339,7 +339,10 @@ success:false
 
 /* ================= ADD PRODUCT ================= */
 
+
 app.post("/product/add",upload.single("image"),async(req,res)=>{
+console.log("BODY:", req.body);
+console.log("FILE:", req.file);
 
 try{
 
