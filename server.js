@@ -3,8 +3,8 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 const app = express();
 
@@ -17,39 +17,31 @@ app.use(cors({
 
 app.use(express.json({ limit: "10mb" }));
 
-/* ================= CREATE UPLOAD FOLDER ================= */
+/* ================= CLOUDINARY CONFIG ================= */
 
-const uploadDir = path.join(__dirname, "uploads");
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET
+});
 
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+/* ================= CLOUDINARY STORAGE ================= */
 
-/* ================= SERVE IMAGES ================= */
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "cerquita",
+    allowed_formats: ["jpg","png","jpeg","webp"]
+  }
+});
 
-app.use("/uploads", express.static(uploadDir));
+const upload = multer({ storage });
 
 /* ================= MONGODB ================= */
 
 mongoose.connect(process.env.MONGO_URI)
 .then(()=>console.log("✅ MongoDB Atlas Connected"))
 .catch(err=>console.log("MongoDB Error:",err));
-
-/* ================= MULTER ================= */
-
-const storage = multer.diskStorage({
-
-destination:(req,file,cb)=>{
-cb(null, uploadDir);
-},
-
-filename:(req,file,cb)=>{
-cb(null, Date.now()+path.extname(file.originalname));
-}
-
-});
-
-const upload = multer({storage});
 
 /* ================= HEALTH ================= */
 
@@ -197,37 +189,6 @@ message:"Server error"
 
 });
 
-/* ================= CHECK VENDOR SHOP ================= */
-
-app.post("/vendor/check", async (req, res) => {
-
-try{
-
-const email = req.body.email.trim().toLowerCase();
-
-const vendor = await Vendor.findOne({ email });
-
-if(!vendor){
-return res.json({exists:false});
-}
-
-res.json({
-exists:true,
-vendor
-});
-
-}catch(err){
-
-console.log("CHECK VENDOR ERROR:",err);
-
-res.json({
-exists:false
-});
-
-}
-
-});
-
 /* ================= CREATE OR UPDATE SHOP ================= */
 
 app.post("/vendor/create", upload.single("image"), async (req,res)=>{
@@ -250,9 +211,7 @@ const cleanEmail = email.trim().toLowerCase();
 
 let vendor = await Vendor.findOne({email: cleanEmail});
 
-const imageUrl = req.file
-? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
-: "";
+const imageUrl = req.file ? req.file.path : "";
 
 if(vendor){
 
@@ -354,9 +313,7 @@ message:"Missing fields"
 });
 }
 
-const imageUrl = req.file
-? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
-: "";
+const imageUrl = req.file ? req.file.path : "";
 
 const product=new Product({
 vendorEmail: vendorEmail.trim().toLowerCase(),
